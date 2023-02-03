@@ -1,0 +1,8 @@
+{
+	"id": "ZsarVanillaTweaks",
+	"name": "Vanilla Tweaks",
+	"author": "Zsar",
+	"version": { "major": 1, "minor": 0, "patch": 0 },
+	"description": "+ wings Dagger, Longbow, Trident tag attack_at_an_angle\n? wing Mining Drone role to SUPPORT from FIGHTER\n? wing Thunder\n  ? role to INTERCEPTOR from FIGHTER\n  ? role_desc to 'Interceptor' from 'Fighter'\n  ? tag\n    + rapid_reform\n    ? to interceptor2 from fighter2",
+	"gameVersion": "0.95.1a-RC6",
+}
