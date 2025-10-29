@@ -2,8 +2,8 @@
 	"id": "ZsarVanillaTweaks",
 	"name": "Vanilla Tweaks",
 	"author": "Zsar",
-	"version": { "major": 3, "minor": 1, "patch": 0 },
-	"description": "? Derinkuyu Station UI name shortened to in-game name\n? Remnants of Task Force Safeguard behave like all other unique ships\n- missiles Breach SRM tag CONSERVE_ALL\n? wing Gladius\n  ? role to INTERCEPTOR from FIGHTER\n  ? tag\n    + rapid_reform\n    ? to interceptor from fighter\n    ? to interceptor2 from fighter2\n? wing Thunder\n  ? role to INTERCEPTOR from FIGHTER\n  ? tag\n    + rapid_reform\n    ? to interceptor2 from fighter2",
+	"version": { "major": 4, "minor": 0, "patch": 0 },
+	"description": "? Derinkuyu Station UI name shortened to in-game name\n? multi-barreled non-PD guns now shoot all barrels simultaneously\n? Remnants of Task Force Safeguard behave like all other unique ships\n- missiles Breach SRM tag CONSERVE_ALL\n? wing Gladius\n  ? role to INTERCEPTOR from FIGHTER\n  ? tag\n    + rapid_reform\n    ? to interceptor from fighter\n    ? to interceptor2 from fighter2\n? wing Thunder\n  ? role to INTERCEPTOR from FIGHTER\n  ? tag\n    + rapid_reform\n    ? to interceptor2 from fighter2",
 	"gameVersion": "0.98a-RC8",
 	"modPlugin": "data.scripts.ZsarVanillaTweaksModPlugin",
 }
