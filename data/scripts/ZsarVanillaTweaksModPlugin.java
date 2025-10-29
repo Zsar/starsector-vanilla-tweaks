@@ -2,9 +2,13 @@ package data.scripts;
 
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.GenericPluginManagerAPI;
 import com.fs.starfarer.api.campaign.SectorAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
+import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
+
+import com.thoughtworks.xstream.XStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -14,6 +18,20 @@ public class ZsarVanillaTweaksModPlugin extends BaseModPlugin {
 
 	public ZsarVanillaTweaksModPlugin() {
 		this.log = LogManager.getLogger(this.getClass());
+	}
+
+	@Override
+	public void configureXStream(XStream x) {
+		x.alias("PKDefenderPluginImpl", PKDefenderPlugin.class);
+	}
+
+	@Override
+	public void onGameLoad(boolean newGame) {
+		final GenericPluginManagerAPI plugins = Global.getSector().getGenericPlugins();
+		// Janino cannot Method References ~~ -Zsar 2025-10-29
+		for (final GenericPluginManagerAPI.GenericPlugin plugin : plugins.getPluginsOfClass(PKDefenderPluginImpl.class))
+			plugins.removePlugin(plugin);
+		plugins.addPlugin(new PKDefenderPlugin(), true);
 	}
 
 	@Override
