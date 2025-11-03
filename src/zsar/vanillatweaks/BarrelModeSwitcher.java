@@ -71,6 +71,10 @@ public class BarrelModeSwitcher implements AdvanceableListener {
 
 	private void toggleToLinked(final WeaponAPI weapon) {
 		final var specCurrent = (N) weapon.getSpec();
+			final var id = weapon.getId();
+			final var barrelMode = specCurrent.getMode();
+			final var burstSize = specCurrent.getBurstSize();
+			final var refireDelay = specCurrent.getRefireDelay();
 		if (specCurrent.getMode() == this.barrelModeLinked)
 			return;
 
@@ -78,12 +82,16 @@ public class BarrelModeSwitcher implements AdvanceableListener {
 		if (specOriginal.getMode() != this.barrelModeLinked) {
 			final var countBarrels = specOriginal.getTurretAngleOffsets().size();
 			specCurrent.setMode(this.barrelModeLinked);
-			if (1 == specOriginal.getBurstSize())
+			if (1 == specOriginal.getBurstSize()) {
 				// e.g. Hephaestus Assault Gun - no burst size to decrease here
-				specCurrent.setRefireDelay(specOriginal.getRefireDelay() * countBarrels);
-			else
+					final var newRefireDelay = specOriginal.getRefireDelay() * countBarrels;
+				specCurrent.setRefireDelay(newRefireDelay);
+			}
+			else {
 				// e.g. Heavy Autocannon - game multiplies burst size with barrel count on BarrelMode.LINKED, so we need to de-multiply it again
-				specCurrent.setBurstSize((int) Math.ceil((float) specOriginal.getBurstSize() / (float) countBarrels));
+					final var newBurstSize = (int) Math.ceil((float) specOriginal.getBurstSize() / (float) countBarrels);
+				specCurrent.setBurstSize(newBurstSize);
+			}
 		}
 		else {
 			specCurrent.setBurstSize(specOriginal.getBurstSize());
@@ -94,6 +102,10 @@ public class BarrelModeSwitcher implements AdvanceableListener {
 
 	private void toggleToNonLinked(final WeaponAPI weapon) {
 		final var specCurrent = (N) weapon.getSpec();
+			final var id = weapon.getId();
+			final var barrelMode = specCurrent.getMode();
+			final var burstSize = specCurrent.getBurstSize();
+			final var refireDelay = specCurrent.getRefireDelay();
 		if (specCurrent.getMode() != this.barrelModeLinked)
 			return;
 
@@ -101,12 +113,16 @@ public class BarrelModeSwitcher implements AdvanceableListener {
 		if (specOriginal.getMode() == this.barrelModeLinked) {
 			final var countBarrels = specOriginal.getTurretAngleOffsets().size();
 			specCurrent.setMode(this.barrelModeAlternating);
-			if (1 == specOriginal.getBurstSize())
+			if (1 == specOriginal.getBurstSize()) {
 				// e.g. Hephaestus Assault Gun - no burst size to increase here
-				specCurrent.setRefireDelay(specOriginal.getRefireDelay() / countBarrels);
-			else
+					final var newRefireDelay = specOriginal.getRefireDelay() / countBarrels;
+				specCurrent.setRefireDelay(newRefireDelay);
+			}
+			else {
 				// e.g. Heavy Autocannon - game multiplies burst size with barrel count on BarrelMode.LINKED, so we need to do so as well
-				specCurrent.setBurstSize(specOriginal.getBurstSize() * countBarrels);
+					final var newBurstSize = specOriginal.getBurstSize() * countBarrels;
+				specCurrent.setBurstSize(newBurstSize);
+			}
 		}
 		else {
 			specCurrent.setBurstSize(specOriginal.getBurstSize());
