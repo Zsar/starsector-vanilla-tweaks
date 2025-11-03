@@ -2,16 +2,11 @@ import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
-import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
-import com.fs.starfarer.api.loading.WeaponSpecAPI;
-import com.fs.starfarer.loading.specs.N;
 
 import com.thoughtworks.xstream.XStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
-import java.util.Arrays;
 
 import zsar.vanillatweaks.PKDefenderPlugin;
 
@@ -26,33 +21,6 @@ public class ZsarVanillaTweaksModPlugin extends BaseModPlugin {
 	@Override
 	public void configureXStream(XStream x) {
 		x.alias("PKDefenderPluginImpl", PKDefenderPlugin.class);
-	}
-
-	@Override
-	public void onApplicationLoad() {
-		try {
-			final var barrelMode = N.o.valueOf("LINKED");
-			for (final WeaponSpecAPI weaponSpec : Global.getSettings().getAllWeaponSpecs()) {
-				final var countBarrels = weaponSpec.getTurretAngleOffsets().size();
-				if ( 1 < countBarrels
-				 &&  WeaponAPI.WeaponType.MISSILE != weaponSpec.getType()
-				 && !weaponSpec.getAIHints().contains(WeaponAPI.AIHints.PD)
-				 && !"Spread Pattern".equals(weaponSpec.getAccuracyStr()) // looks horrible
-				 &&  weaponSpec instanceof N spec
-				 &&  barrelMode != spec.getMode()) {
-					spec.setMode(barrelMode);
-					//spec.setSeparateRecoilForLinkedBarrels(true);
-					if (1 == spec.getBurstSize()) // e.g. Hephaestus Assault Gun - no burst size to decrease here
-						spec.setRefireDelay(spec.getRefireDelay() * countBarrels);
-					else                          // e.g. Heavy Autocannon - game multiplies burst size with barrel count on BarrelMode.LINKED, so we need to de-multiply it again
-						spec.setBurstSize((int) Math.ceil((float) spec.getBurstSize() / (float) countBarrels));
-				}
-			}
-		}
-		catch (final Throwable e) {
-			final var barrelModeNames = Arrays.stream(N.o.values()).map(Enum::name).toList();
-			this.log.error(String.format("Expected to find Barrel Mode 'LINKED' but only found %s", barrelModeNames), e);
-		}
 	}
 
 	@Override
