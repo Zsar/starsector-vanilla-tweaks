@@ -2,10 +2,10 @@
 	"id": "ZsarVanillaTweaks",
 	"name": "Vanilla Tweaks",
 	"author": "Zsar",
-	"version": { "major": 4, "minor": 1, "patch": 0 },
-	"description": "? Derinkuyu Station UI name shortened to in-game name\n? multi-barreled non-PD guns now shoot all barrels simultaneously\n? Remnants of Task Force Safeguard behave like all other unique ships\n- missiles Breach SRM tag CONSERVE_ALL\n? wing roles are aligned to match their role description",
+	"version": { "major": 4, "minor": 2, "patch": 0 },
+	"description": "? Derinkuyu Station UI name shortened to in-game name\n? multi-barreled non-PD guns now shoot all barrels simultaneously\n? Remnants of Task Force Safeguard behave like all other unique ships\n? weapon AIHint adjustments:\n  +USE_LESS_VS_SHIELDS if CONSERVE_FOR_ANTI_ARMOR is already present\n  -CONSERVE_ALL if more specific restrictions are already in place\n? wing roles are aligned to match their role description",
 	"gameVersion": "0.98a-RC8",
 	"utility": "true",
 	"jars": ["starsector-vanilla-tweaks.jar"],
-	"modPlugin": "zsar.vanillatweaks.ModPlugin",
+	"modPlugin": "zsar.vanillatweaks.ModPlugin"
 }

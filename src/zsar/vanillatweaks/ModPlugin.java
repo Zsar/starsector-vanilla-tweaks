@@ -2,6 +2,7 @@ package zsar.vanillatweaks;
 
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.combat.WeaponAPI;
@@ -16,6 +17,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
@@ -34,13 +37,16 @@ public class ModPlugin extends BaseModPlugin {
 
 	@Override
 	public void onApplicationLoad() {
+		final var settings = Global.getSettings();
+
 		for (final var role : WingRole.values()) {
 			final var pattern = Pattern.compile(role.name(), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-			for (final var wing : Global.getSettings().getAllFighterWingSpecs())
+			for (final var wing : settings.getAllFighterWingSpecs())
 				if (wing.getRole() != role && pattern.matcher(wing.getRoleDesc()).find())
 					this.alignWingRole(wing, role);
 		}
 
+		this.adjustAiHints(settings);
 		this.linkBarrels();
 	}
 
@@ -56,6 +62,33 @@ public class ModPlugin extends BaseModPlugin {
 		final var sector = Global.getSector();
 		this.shortenNameOfDerinkuyuStation(sector.getEconomy().getMarket("derinkuyu_market"),
 		                                   sector.getEntityById("derinkuyu_station"));
+	}
+
+	/** <p>{@link WeaponAPI.AIHints#CONSERVE_ALL} makes the AI more reluctant to fire a weapon, no questions asked;
+	 *     if another AIHint already makes the AI more reluctant to fire it <i>in specific use cases</i>,
+	 *     this is harmful, as it will lead to missed opportunities.</p>
+	 *  <p>{@link WeaponAPI.AIHints#USE_LESS_VS_SHIELDS} was introduced after {@link WeaponAPI.AIHints#CONSERVE_FOR_ANTI_ARMOR},
+	 *     but has not been added to older weapons. Adding it to weapons limited by ammunition keeps them ready to exploit opportunities.</p>
+	 */
+	private void adjustAiHints(final SettingsAPI settings) {
+		final var conserve = Pattern.compile("CONSERVE(?!_ALL)");
+		final var logStatementPreamble = "Adjusted weapon '%s' AIHints:";
+		final var hintsSufficient = EnumSet.allOf(WeaponAPI.AIHints.class);
+		hintsSufficient.removeIf(hint -> !conserve.matcher(hint.name()).find());
+		hintsSufficient.add(WeaponAPI.AIHints.USE_LESS_VS_SHIELDS); // sadly escapes the naming scheme
+		for (final var weapon : settings.getActuallyAllWeaponSpecs()) {
+			final var hints = weapon.getAIHints();
+			var logStatement = logStatementPreamble;
+			if (hints.contains(WeaponAPI.AIHints.CONSERVE_FOR_ANTI_ARMOR) && weapon.usesAmmo() && hints.add(WeaponAPI.AIHints.USE_LESS_VS_SHIELDS))
+				logStatement += String.format("\n\t+'%s' as it already has '%s' and also uses ammunition.",
+				                              WeaponAPI.AIHints.USE_LESS_VS_SHIELDS,
+				                              WeaponAPI.AIHints.CONSERVE_FOR_ANTI_ARMOR);
+			if (!Collections.disjoint(hints, hintsSufficient) && hints.remove(WeaponAPI.AIHints.CONSERVE_ALL))
+				logStatement += String.format("\n\t-'%s' as it already has a more specific restriction.",
+				                              WeaponAPI.AIHints.CONSERVE_ALL);
+			if (!logStatementPreamble.equals(logStatement))
+				this.log.info(String.format(logStatement, weapon.getWeaponId()));
+		}
 	}
 
 	private void alignWingRole(final FighterWingSpecAPI misgendered, final WingRole right) {
