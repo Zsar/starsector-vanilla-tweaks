@@ -1,3 +1,0 @@
-id,variant,tags,tier,rarity,fleet pts,op cost,formation,range,attackRunRange,attackPositionOffset,num,role,role desc,refit,base value,,,,,,,,,,,,,number
-gladius_wing,gladius_Fighter,"interceptor4, interceptor, mid, rapid_reform, midline_bp, merc, ind",2,,6,6,V,4000,500,300,2,INTERCEPTOR,Heavy Interceptor,10,10000,,,,,,,,,,,,,3
-thunder_wing,thunder_Fighter,"interceptor2, interceptor, mid, rapid_reform, rare_bp, merc, ind",2,,6,10,V,6000,500,900,2,INTERCEPTOR,Heavy Interceptor,15,7000,,,,,,,,,,,,,5

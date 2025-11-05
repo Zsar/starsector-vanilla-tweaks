@@ -6,7 +6,9 @@ import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
+import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
+import com.fs.starfarer.api.loading.WingRole;
 import com.fs.starfarer.loading.specs.N;
 
 import com.thoughtworks.xstream.XStream;
@@ -14,6 +16,8 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") // dynamically loaded
 public class ModPlugin extends BaseModPlugin {
@@ -30,6 +34,13 @@ public class ModPlugin extends BaseModPlugin {
 
 	@Override
 	public void onApplicationLoad() {
+		for (final var role : WingRole.values()) {
+			final var pattern = Pattern.compile(role.name(), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+			for (final var wing : Global.getSettings().getAllFighterWingSpecs())
+				if (wing.getRole() != role && pattern.matcher(wing.getRoleDesc()).find())
+					this.alignWingRole(wing, role);
+		}
+
 		this.linkBarrels();
 	}
 
@@ -45,6 +56,24 @@ public class ModPlugin extends BaseModPlugin {
 		final var sector = Global.getSector();
 		this.shortenNameOfDerinkuyuStation(sector.getEconomy().getMarket("derinkuyu_market"),
 		                                   sector.getEntityById("derinkuyu_station"));
+	}
+
+	private void alignWingRole(final FighterWingSpecAPI misgendered, final WingRole right) {
+		final var wrong = misgendered.getRole();
+		final var tagRight = tagFrom(right);
+		final var tagWrong = tagFrom(wrong);
+		final var tags = misgendered.getTags();
+		final var tagsRight = new LinkedHashSet<String>();
+		for (final var i = tags.iterator(); i.hasNext(); ) {
+			final var value = i.next();
+			if (value.startsWith(tagWrong)) {
+				i.remove();
+				tagsRight.add(value.replace(tagWrong, tagRight));
+			}
+		}
+		tags.addAll(tagsRight);
+		misgendered.setRole(right);
+		this.log.info(String.format("Aligned wing '%s' from '%s' to '%s'", misgendered.getId(), wrong, right));
 	}
 
 	private void linkBarrels() {
@@ -88,5 +117,9 @@ public class ModPlugin extends BaseModPlugin {
 		else {
 			this.log.warn("Derinkuyu Station name no longer has superfluous 'Mining' qualifier. Check whether fix 'shortenNameOfDerinkuyuStation' can be removed or simplified.");
 		}
+	}
+
+	private static String tagFrom(final WingRole role) {
+		return role.name().toLowerCase();
 	}
 }
