@@ -3,9 +3,13 @@ package zsar.vanillatweaks;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.SettingsAPI;
+import com.fs.starfarer.api.campaign.SectorAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
+import com.fs.starfarer.api.campaign.StarSystemAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
+import com.fs.starfarer.api.campaign.rules.HasMemory;
 import com.fs.starfarer.api.combat.WeaponAPI;
+import com.fs.starfarer.api.impl.campaign.PlanetInteractionDialogPluginImpl;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
@@ -20,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") // dynamically loaded
@@ -52,7 +57,10 @@ public class ModPlugin extends BaseModPlugin {
 
 	@Override
 	public void onGameLoad(boolean newGame) {
-		final var plugins = Global.getSector().getGenericPlugins();
+		final var sector = Global.getSector();
+		this.expireSectorLocationCreationBlocker(sector);
+
+		final var plugins = sector.getGenericPlugins();
 		plugins.getPluginsOfClass(PKDefenderPluginImpl.class).forEach(plugins::removePlugin);
 		plugins.addPlugin(new PKDefenderPlugin(), true);
 	}
@@ -107,6 +115,26 @@ public class ModPlugin extends BaseModPlugin {
 		tags.addAll(tagsRight);
 		misgendered.setRole(right);
 		this.log.info(String.format("Aligned wing '%s' from '%s' to '%s'", misgendered.getId(), wrong, right));
+	}
+
+	/** retrofit an expiry date to stars manipulated before this mod version was present */
+	private void expireSectorLocationCreationBlocker(final SectorAPI sector) {
+		final var sectorMemory = sector.getMemoryWithoutUpdate();
+		final var myTypeName = this.getClass().getTypeName();
+		if (!sectorMemory.is(PlanetInteractionDialogPluginImpl.ADDED_KEY, myTypeName)) {
+			var count = new Pointer<>(0);
+			sector.getStarSystems().stream()
+				.map(StarSystemAPI::getStar)
+				.filter(Objects::nonNull) // Alpha Site, nebulae
+				.map(HasMemory::getMemoryWithoutUpdate)
+				.filter(memory -> memory.contains(PlanetInteractionDialogPluginImpl.ADDED_KEY))
+				.filter(memory -> 0.f > memory.getExpire(PlanetInteractionDialogPluginImpl.ADDED_KEY))
+				.peek(unused -> ++count.value)
+				.forEach(memory -> memory.expire(PlanetInteractionDialogPluginImpl.ADDED_KEY,
+				                                 PlanetInteractionDialogPluginImpl.STABLE_LOCATION_CREATION_BLOCKED_DAYS));
+			sectorMemory.set(PlanetInteractionDialogPluginImpl.ADDED_KEY, myTypeName);
+			this.log.info(String.format("Added expiry to %d stars which were previously blocked from receiving additional Stable Locations.", count.value));
+		}
 	}
 
 	private void linkBarrels() {
