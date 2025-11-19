@@ -14,6 +14,7 @@ import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
+import com.fs.starfarer.loading.specs.g;
 import com.fs.starfarer.loading.specs.N;
 
 import com.thoughtworks.xstream.XStream;
@@ -52,6 +53,7 @@ public class ModPlugin extends BaseModPlugin {
 		}
 
 		this.adjustAiHints(settings);
+		this.denerfLionsGuardShips(settings);
 		this.linkBarrels();
 	}
 
@@ -115,6 +117,68 @@ public class ModPlugin extends BaseModPlugin {
 		tags.addAll(tagsRight);
 		misgendered.setRole(right);
 		this.log.info(String.format("Aligned wing '%s' from '%s' to '%s'", misgendered.getId(), wrong, right));
+	}
+
+	/** <p>As per the original blog post, they should pay only for Solar Shielding and nothing more.</p>
+	 *  <p>The Executor also gains shield efficiency, but none of the others do.</p>
+	 */
+	private void denerfLionsGuardShips(final SettingsAPI settings) {
+		final var executor = settings.getHullSpec("executor");
+		final var fluxPerDamageExecutor = executor.getShieldSpec().getFluxPerDamageAbsorbed();
+		final var fluxPerDamageExecutorBase = executor.getBaseHull().getShieldSpec().getFluxPerDamageAbsorbed();
+		final var fluxPerDamageOffset = fluxPerDamageExecutorBase - fluxPerDamageExecutor;
+		if (fluxPerDamageExecutor >= fluxPerDamageExecutorBase)
+			this.log.warn(String.format("""
+				Executor no longer seems to receive a flux per damage buff compared to its base hull. Adapt method!
+				\tflux per damage Executor : %f.2
+				\tflux per damage base hull: %f.2
+				\tflux per damage offset: %f.2
+				""", fluxPerDamageExecutor, fluxPerDamageExecutorBase, fluxPerDamageOffset));
+		final var solarShielding = settings.getHullModSpec("solar_shielding");
+		final var idSolarShielding = solarShielding.getId();
+		final var ships = settings.getAllShipHullSpecs();
+		ships.stream()
+			.filter(ship -> ship instanceof g)
+			.filter(ship -> !ship.isBaseHull())
+			.filter(ship -> "Lion's Guard".equals(ship.getManufacturer()))
+			.map(g.class::cast)
+			.forEach(ship -> {
+				final var base = ship.getBaseHull();
+				final var id = ship.getHullId();
+				if (ship.getBuiltInMods().contains(idSolarShielding)) {
+					final var opBase = base.getOrdnancePoints(null);
+					final var opShip = ship.getOrdnancePoints(null);
+					final var opExpected = opBase - solarShielding.getCostFor(ship.getHullSize());
+					if (opShip < opExpected)
+						ship.setOrdnancePoints(opExpected);
+					else if (opShip > opExpected)
+						this.log.warn(String.format("""
+							Lion's Guard ship with more than expected OP found. Validate filter!
+							\tId: %s
+							\tOP expected: %d
+							\tOP found   : %d
+							""", id, opExpected, opShip));
+				}
+				else
+					this.log.warn(String.format("""
+						Lion's Guard ship without Solar Shielding found. Skipping!
+						\tId: %s
+						""", id));
+
+				final var shield = ship.getShieldSpec();
+				final var fluxPerDamageShieldBase = base.getShieldSpec().getFluxPerDamageAbsorbed();
+				final var fluxPerDamageShieldShip = shield.getFluxPerDamageAbsorbed();
+				final var fluxPerDamageShieldExpected = fluxPerDamageShieldBase - fluxPerDamageOffset;
+				if (fluxPerDamageShieldShip > fluxPerDamageShieldExpected)
+					shield.setFluxPerDamageAbsorbed(fluxPerDamageShieldExpected);
+				else if (fluxPerDamageShieldShip < fluxPerDamageShieldExpected)
+					this.log.warn(String.format("""
+						Lion's Guard ship with more efficient shields than expected found. Validate filter!
+						\tId: %s
+						\tFlux per damage expected: %f.2
+						\tFlux per damage found   : %f.2
+						""", id, fluxPerDamageShieldExpected, fluxPerDamageShieldShip));
+			});
 	}
 
 	/** retrofit an expiry date to stars manipulated before this mod version was present */
