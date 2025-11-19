@@ -8,9 +8,11 @@ import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.StarSystemAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.HasMemory;
+import com.fs.starfarer.api.combat.DamageType;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.impl.campaign.PlanetInteractionDialogPluginImpl;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
+import com.fs.starfarer.api.loading.BeamWeaponSpecAPI;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
@@ -53,8 +55,9 @@ public class ModPlugin extends BaseModPlugin {
 		}
 
 		this.adjustAiHints(settings);
+		this.beamBeamBeam(settings);
 		this.denerfLionsGuardShips(settings);
-		this.linkBarrels();
+		this.linkBarrels(settings);
 	}
 
 	@Override
@@ -117,6 +120,19 @@ public class ModPlugin extends BaseModPlugin {
 		tags.addAll(tagsRight);
 		misgendered.setRole(right);
 		this.log.info(String.format("Aligned wing '%s' from '%s' to '%s'", misgendered.getId(), wrong, right));
+	}
+
+	/** Some beams are just horribly slow. But we cannot set them all to max speed, lest the visuals suffer. */
+	private void beamBeamBeam(final SettingsAPI settings) {
+		// Note: Could be faster, but target AI may fail to react. Not a problem for DEMs as the AI reacts to the missiles themselves.
+		final var speedInstantish = ((BeamWeaponSpecAPI) settings.getWeaponSpec("pdburst")).getBeamSpeed();
+		settings.getActuallyAllWeaponSpecs().stream()
+			.filter(weapon -> weapon instanceof BeamWeaponSpecAPI)
+			.map(BeamWeaponSpecAPI.class::cast)
+			.filter(weapon -> !weapon.isBurstBeam())                         // always instant
+			.filter(weapon -> DamageType.KINETIC != weapon.getDamageType())  // Graviton
+			.filter(weapon -> !"abyssal_glare".equals(weapon.getWeaponId())) // Plasma
+			.forEach(weapon -> weapon.setBeamSpeed(Math.max(speedInstantish, weapon.getBeamSpeed())));
 	}
 
 	/** <p>As per the original blog post, they should pay only for Solar Shielding and nothing more.</p>
@@ -201,10 +217,10 @@ public class ModPlugin extends BaseModPlugin {
 		}
 	}
 
-	private void linkBarrels() {
+	private void linkBarrels(final SettingsAPI settings) {
 		try {
 			final var barrelMode = N.o.valueOf("LINKED");
-			for (final WeaponSpecAPI weaponSpec : Global.getSettings().getAllWeaponSpecs()) {
+			for (final WeaponSpecAPI weaponSpec : settings.getAllWeaponSpecs()) {
 				final var countBarrels = weaponSpec.getTurretAngleOffsets().size();
 				if ( 1 < countBarrels
 				 &&  WeaponAPI.WeaponType.MISSILE != weaponSpec.getType()
