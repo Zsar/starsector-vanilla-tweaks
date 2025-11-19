@@ -12,6 +12,7 @@ import com.fs.starfarer.api.combat.DamageType;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.impl.campaign.PlanetInteractionDialogPluginImpl;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
+import com.fs.starfarer.api.impl.combat.dweller.HumanShipShroudedHullmod;
 import com.fs.starfarer.api.loading.BeamWeaponSpecAPI;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
@@ -58,6 +59,8 @@ public class ModPlugin extends BaseModPlugin {
 		this.beamBeamBeam(settings);
 		this.denerfLionsGuardShips(settings);
 		this.linkBarrels(settings);
+
+		HumanShipShroudedHullmod.ALLOW_ON_PHASE_SHIPS = true;
 	}
 
 	@Override
