@@ -10,6 +10,8 @@ import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.HasMemory;
 import com.fs.starfarer.api.combat.DamageType;
 import com.fs.starfarer.api.combat.WeaponAPI;
+import com.fs.starfarer.api.combat.WeaponAPI.WeaponSize;
+import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
 import com.fs.starfarer.api.impl.campaign.PlanetInteractionDialogPluginImpl;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
 import com.fs.starfarer.api.impl.combat.dweller.HumanShipShroudedHullmod;
@@ -61,6 +63,24 @@ public class ModPlugin extends BaseModPlugin {
 		this.linkBarrels(settings);
 
 		HumanShipShroudedHullmod.ALLOW_ON_PHASE_SHIPS = true;
+
+		final var conquest = settings.getHullSpec("conquest");
+		final var hullMods = conquest.getBuiltInMods();
+		if (hullMods.remove("hbi")) {
+			hullMods.add("heavy_battery_integration");
+			((g) conquest).getAllWeaponSlots().stream()
+				.filter(slot -> WeaponSize.LARGE == slot.getSlotSize())
+				.filter(slot -> WeaponType.BALLISTIC == slot.getWeaponType())
+				.forEach(slot -> slot.setWeaponType(WeaponType.HYBRID));
+			final var variants = settings.getHullIdToVariantListMap().get(conquest.getHullId());
+			variants.stream().map(settings::getVariant).forEach(variant -> {
+				final var mods = variant.getHullMods();
+				if (mods.remove("hbi"))
+					mods.add("heavy_battery_integration");
+				else
+					this.log.error(String.format("Variant '%s' did not have Heavy Ballistics Integration. Check consistency!", variant.getDisplayName()));
+			});
+		}
 	}
 
 	@Override

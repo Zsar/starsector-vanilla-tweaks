@@ -1,0 +1,2 @@
+name,id,tier,rarity,tech/manufacturer,tags,uiTags,base value,unlocked,hidden,hiddenEverywhere,cost_frigate,cost_dest,cost_cruiser,cost_capital,script,desc,short,sModDesc,sprite
+Heavy Battery Integration,heavy_battery_integration,,,,,,,,TRUE,,0,0,0,0,zsar.vanillatweaks.hullmods.HeavyBatteryIntegration,"Reduces the ordnance point cost of large ballistic, energy and hybrid weapons by %s.","Reduces ordnance point cost of large ballistic, energy, hybrid weapons.",,graphics/hullmods/ballistics_integration.png
