@@ -15,6 +15,7 @@ import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
 import com.fs.starfarer.api.impl.combat.dweller.HumanShipShroudedHullmod;
 import com.fs.starfarer.api.loading.BeamWeaponSpecAPI;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
+import com.fs.starfarer.api.loading.ProjectileSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
 import com.fs.starfarer.loading.specs.g;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") // dynamically loaded
@@ -61,6 +63,21 @@ public class ModPlugin extends BaseModPlugin {
 		this.linkBarrels(settings);
 
 		HumanShipShroudedHullmod.ALLOW_ON_PHASE_SHIPS = true;
+
+		final var pseudoparticleJet = settings.getWeaponSpec("pseudoparticle_jet");
+		((ProjectileSpecAPI) pseudoparticleJet.getProjectileSpec())
+			.setOnHitClassName(PseudoparticleJetEffect.class.getCanonicalName());
+		pseudoparticleJet.setCustomPrimary(Optional.ofNullable(pseudoparticleJet.getCustomPrimary())
+		                                   	.map(string -> string + "\n\n")
+		                                   	.orElse("")
+		                                 + """
+		                                   Hits slow the target by %s and draw it in front of the weapon.
+		                                   The less mass the target has relative to the firing ship, the more it is pulled.
+		                                   """);
+		pseudoparticleJet.setCustomPrimaryHL(Optional.ofNullable(pseudoparticleJet.getCustomPrimaryHL())
+		                                     	.map(string -> string + '|')
+		                                     	.orElse("")
+		                                   + String.format("%.0f%%", 100.f * (1.f - PseudoparticleJetEffect.FACTOR_SLOW_DOWN)));
 	}
 
 	@Override
