@@ -3,6 +3,13 @@
 planet_interaction_dialog_plugin=com/fs/starfarer/api/impl/campaign/PlanetInteractionDialogPluginImpl.java
 unzip -o ../../starfarer.api $planet_interaction_dialog_plugin -d generated-sources
 planet_interaction_dialog_plugin=generated-sources/$planet_interaction_dialog_plugin
+
+devouring_swarm_missile_effect=com/fs/starfarer/api/impl/combat/threat/DevouringSwarmMissileEffect.java
+unzip -o ../../starfarer.api $devouring_swarm_missile_effect -d generated-sources
+devouring_swarm_missile_effect=generated-sources/$devouring_swarm_missile_effect
+disintegrator_effect=com/fs/starfarer/api/impl/combat/DisintegratorEffect.java
+unzip -o ../../starfarer.api $disintegrator_effect -d generated-sources
+disintegrator_effect=generated-sources/$disintegrator_effect
 # Sanity Checks
 exit_code=0
 stable_location_limit_candidates=$(grep -c 'num < 2' "$planet_interaction_dialog_plugin")
