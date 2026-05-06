@@ -8,6 +8,7 @@ import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.StarSystemAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.HasMemory;
+import com.fs.starfarer.api.combat.ShipHullSpecAPI.ShipTypeHints;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.impl.campaign.PlanetInteractionDialogPluginImpl;
 import com.fs.starfarer.api.impl.campaign.procgen.themes.PKDefenderPluginImpl;
@@ -55,7 +56,8 @@ public class ModPlugin extends BaseModPlugin {
 					this.alignWingRole(wing, role);
 		}
 
-		this.adjustAiHints(settings);
+		this.adjustAiHintsShips(settings);
+		this.adjustAiHintsWeapons(settings);
 		this.beamBeamBeam(settings);
 		this.denerfLionsGuardShips(settings);
 		this.linkBarrels(settings);
@@ -80,13 +82,24 @@ public class ModPlugin extends BaseModPlugin {
 		                                   sector.getEntityById("derinkuyu_station"));
 	}
 
+	/** Currently only ensures that carriers too brittle for the battle line do not seek it. */
+	private void adjustAiHintsShips(final SettingsAPI settings) {
+		this.decombatCombatCarrier(settings, "colossus3");
+		this.decombatCombatCarrier(settings, "drover");
+		final var spec = settings.getHullSpec("gemini");
+		if (!spec.getHints().contains(ShipTypeHints.CARRIER))
+			spec.getHints().add(ShipTypeHints.CARRIER);
+		else
+			this.log.warn("gemini does already seem to be tagged as a carrier - function can be simplified!");
+	}
+
 	/** <p>{@link WeaponAPI.AIHints#CONSERVE_ALL} makes the AI more reluctant to fire a weapon, no questions asked;
 	 *     if another AIHint already makes the AI more reluctant to fire it <i>in specific use cases</i>,
 	 *     this is harmful, as it will lead to missed opportunities.</p>
 	 *  <p>{@link WeaponAPI.AIHints#USE_LESS_VS_SHIELDS} was introduced after {@link WeaponAPI.AIHints#CONSERVE_FOR_ANTI_ARMOR},
 	 *     but has not been added to older weapons. Adding it to weapons limited by ammunition keeps them ready to exploit opportunities.</p>
 	 */
-	private void adjustAiHints(final SettingsAPI settings) {
+	private void adjustAiHintsWeapons(final SettingsAPI settings) {
 		final var conserve = Pattern.compile("CONSERVE(?!_ALL)");
 		final var logStatementPreamble = "Adjusted weapon '%s' AIHints:";
 		final var hintsSufficient = EnumSet.allOf(WeaponAPI.AIHints.class);
@@ -135,6 +148,14 @@ public class ModPlugin extends BaseModPlugin {
 			.filter(weapon -> !weapon.isBurstBeam())                                   // always instant
 			.filter(weapon -> !(weapon.getBeamEffect() instanceof GravitonBeamEffect)) // not laser
 			.forEach(weapon -> weapon.setBeamSpeed(Math.max(speedInstantish, weapon.getBeamSpeed())));
+	}
+
+	private void decombatCombatCarrier(final SettingsAPI settings, final String hullId) {
+		final var spec = settings.getHullSpec(hullId);
+		if (spec.getHints().contains(ShipTypeHints.COMBAT))
+			spec.getHints().remove(ShipTypeHints.COMBAT);
+		else
+			this.log.warn(hullId + " does no longer seem to be tagged as a combat carrier - function can be simplified!");
 	}
 
 	/** <p>As per the original blog post, they should pay only for Solar Shielding and nothing more.</p>
