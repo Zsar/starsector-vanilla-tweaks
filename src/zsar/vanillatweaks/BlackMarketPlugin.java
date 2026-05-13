@@ -72,6 +72,11 @@ public class BlackMarketPlugin extends com.fs.starfarer.api.impl.campaign.submar
 		var goodProductionFreighter = Proliferation.NONE;
 		var goodProductionTanker    = Proliferation.NONE;
 		var goodProductionTransport = Proliferation.NONE; // Note: specifically *Troop* Transports
+		var goodProductionLiner     = super.market.getSize() > 6 // at least 10'000'000 inhabitants
+		                            ? Proliferation.MUCH
+		                            : super.market.getSize() > 3 // at least     10'000 inhabitants
+		                            ? Proliferation.SOME
+		                            : Proliferation.NONE;
 		var goodProductionUtility   = Proliferation.NONE; // Note: defined in data/world/factions/default_ship_roles.json as "utility"
 		var shipProduction = Proliferation.NONE;
 		for (final var industry : super.market.getIndustries()) {
@@ -103,7 +108,7 @@ public class BlackMarketPlugin extends com.fs.starfarer.api.impl.campaign.submar
 		                                              	this.fraction(goodProductionFreighter),
 		                                              	this.fraction(goodProductionTanker),
 		                                              	this.fraction(goodProductionTransport),
-		                                              	this.fraction(Proliferation.NONE),
+		                                              	this.fraction(goodProductionLiner),
 		                                              	this.fraction(goodProductionUtility),
 		                                              };
 	}
